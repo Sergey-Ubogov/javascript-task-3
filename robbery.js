@@ -14,8 +14,145 @@ exports.isStar = true;
  * @param {String} workingHours.to – Время закрытия, например, "18:00+5"
  * @returns {Object}
  */
+
+function getNextDay(currentDay) {
+    switch (currentDay) {
+        case 'ПН':
+            return 'ВТ';
+        case 'ВТ':
+            return 'СР';
+        case 'СР':
+            return 'ЧТ';
+        case 'ЧТ':
+            return 'ПТ';
+        case 'ПТ':
+            return 'СБ';
+        default:
+            return 'ВС';
+    }
+}
+
+function getYesterday(currentDay) {
+    switch (currentDay) {
+        case 'ВТ':
+            return 'ПН';
+        case 'СР':
+            return 'ВТ';
+        case 'ЧТ':
+            return 'СР';
+        case 'ПТ':
+            return 'ЧТ';
+        case 'СБ':
+            return 'ПТ';
+        default:
+            return 'СБ';
+    }
+}
+
+function setTimeRegardingBank(oldTime, shift) {
+    var hours = Number(oldTime.split(' ')[1].split(':')[0]);
+    var nameDayToNumber = {
+        'ПН': 1, 'ВТ': 2, 'СР': 3, 'ЧТ': 4, 'ПТ': 5, 'СБ': 6, 'ВС': 7
+    };
+    var day = oldTime.split(' ')[0];
+    if (hours + shift >= 24) {
+        hours = hours + shift - 24;
+        day = getNextDay(day);
+    } else if (hours + shift < 0) {
+        hours = 24 + hours + shift;
+        day = getYesterday(day);
+    } else {
+        hours = hours + shift;
+    }
+    if (String(hours).length === 1) {
+        hours = '0' + String(hours);
+    }
+    var newDate = new Date(0, 0, nameDayToNumber[day], hours, oldTime.split(':')[1].split('+')[0]);
+
+    return newDate;
+}
+
+function freeTimeSearch(friendBusyTime, currentFreeTime, freeTimes) {
+    if (friendBusyTime.from <= currentFreeTime.begin &&
+        friendBusyTime.to > currentFreeTime.begin) {
+        if (friendBusyTime.to >= currentFreeTime.end) {
+            currentFreeTime = {};
+        } else {
+            currentFreeTime.begin = friendBusyTime.to;
+        }
+    }
+    if (friendBusyTime.from > currentFreeTime.begin &&
+        friendBusyTime.from < currentFreeTime.end) {
+        if (friendBusyTime.to >= currentFreeTime.end) {
+            currentFreeTime.end = friendBusyTime.from;
+        } else {
+            var end = currentFreeTime.end;
+            currentFreeTime.end = friendBusyTime.from;
+            freeTimes.push({
+                begin: friendBusyTime.to,
+                end: end
+            });
+        }
+    }
+}
+
+function getFreeTimeForFriend(friend, currentFreeTime, goodDay) {
+    friend.forEach(function (friendBusyTime) {
+        freeTimeSearch(friendBusyTime, currentFreeTime, goodDay);
+    });
+}
+
 exports.getAppropriateMoment = function (schedule, duration, workingHours) {
     console.info(schedule, duration, workingHours);
+    var timeZoneBank = Number(workingHours.from.split('+')[1]);
+    var timeZoneDanny = Number(schedule.Danny[0].from.split('+')[1]);
+    var timeZoneRusty = Number(schedule.Rusty[0].from.split('+')[1]);
+    var timeZoneLinus = Number(schedule.Linus[0].from.split('+')[1]);
+    var copyShadule = {
+        Danny: [
+        ],
+        Rusty: [
+        ],
+        Linus: [
+        ]
+    };
+    schedule.Danny.forEach(function (scheduleDanny) {
+        copyShadule.Danny.push(
+            {
+                from: setTimeRegardingBank(scheduleDanny.from, timeZoneBank - timeZoneDanny),
+                to: setTimeRegardingBank(scheduleDanny.to, timeZoneBank - timeZoneDanny)
+            });
+    });
+    schedule.Rusty.forEach(function (scheduleRusty) {
+        copyShadule.Rusty.push(
+            {
+                from: setTimeRegardingBank(scheduleRusty.from, timeZoneBank - timeZoneRusty),
+                to: setTimeRegardingBank(scheduleRusty.to, timeZoneBank - timeZoneRusty)
+            });
+    });
+    schedule.Linus.forEach(function (scheduleLinus) {
+        copyShadule.Linus.push(
+            {
+                from: setTimeRegardingBank(scheduleLinus.from, timeZoneBank - timeZoneLinus),
+                to: setTimeRegardingBank(scheduleLinus.to, timeZoneBank - timeZoneLinus)
+            });
+    });
+    var goodDays = [[], [], []];
+    for (var i = 1; i <= goodDays.length; i++) {
+        goodDays[i - 1].push({ begin:
+                            new Date(
+                                0, 0, i, Number(workingHours.from.split(':')[0]),
+                                Number(workingHours.from.split(':')[1].split('+')[0])
+                            ),
+                          end:
+                            new Date(
+                                0, 0, i, Number(workingHours.to.split(':')[0]),
+                                Number(workingHours.to.split(':')[1].split('+')[0])
+                            )
+                        });
+    }
+    var find = false;
+    var copyGoodDays = [];
 
     return {
 
@@ -24,6 +161,34 @@ exports.getAppropriateMoment = function (schedule, duration, workingHours) {
          * @returns {Boolean}
          */
         exists: function () {
+            var friends = [copyShadule.Danny, copyShadule.Rusty, copyShadule.Linus];
+            goodDays.forEach(function (goodDay) {
+                goodDay.forEach(function (currentFreeTime) {
+                    friends.forEach(function (friend) {
+                        getFreeTimeForFriend(friend, currentFreeTime, goodDay);
+                    });
+                });
+            });
+            goodDays.forEach(function (goodDay) {
+                copyGoodDays.push([]);
+                goodDay.forEach(function (goodTime) {
+                    copyGoodDays[copyGoodDays.length - 1].push({
+                        begin: goodTime.begin,
+                        end: goodTime.end
+                    });
+                });
+            });
+            goodDays.forEach(function (goodDay) {
+                goodDay.forEach(function (goodTime) {
+                    if ((goodTime.end - goodTime.begin) / (60 * 1000) >= duration && !find) {
+                        find = goodTime.begin;
+                    }
+                });
+            });
+            if (find) {
+                return true;
+            }
+
             return false;
         },
 
@@ -35,7 +200,26 @@ exports.getAppropriateMoment = function (schedule, duration, workingHours) {
          * @returns {String}
          */
         format: function (template) {
-            return template;
+            if (find) {
+                var hours = String(find.getHours());
+                var minutes = String(find.getMinutes());
+                if (hours.length === 1) {
+                    hours = '0' + hours;
+                }
+                if (minutes.length === 1) {
+                    minutes = '0' + minutes;
+                }
+                template = template.replace('%HH', hours);
+                template = template.replace('%MM', minutes);
+                var numberDayToName = {
+                    1: 'ПН', 2: 'ВТ', 3: 'СР', 4: 'ЧТ', 5: 'ПТ', 6: 'СБ', 0: 'ВС'
+                };
+                template = template.replace('%DD', numberDayToName[find.getDay()]);
+
+                return template;
+            }
+
+            return '';
         },
 
         /**
@@ -44,6 +228,31 @@ exports.getAppropriateMoment = function (schedule, duration, workingHours) {
          * @returns {Boolean}
          */
         tryLater: function () {
+            if (!find) {
+                this.exists();
+            }
+            copyGoodDays.forEach(function (goodDay) {
+                goodDay.forEach(function (goodTime) {
+                    if (find === goodTime.begin) {
+                        goodTime.begin.setMinutes(goodTime.begin.getMinutes() + 30);
+                    }
+                });
+            });
+            var findMore = false;
+            copyGoodDays.forEach(function (goodDay) {
+                goodDay.forEach(function (goodTime) {
+                    if ((goodTime.end - goodTime.begin) / (60 * 1000) >= duration && !findMore) {
+                        findMore = goodTime.begin;
+                    }
+                });
+            });
+            if (findMore) {
+                find = findMore;
+
+                return true;
+            }
+            find.setMinutes(find.getMinutes() - 30);
+
             return false;
         }
     };
