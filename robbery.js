@@ -4,7 +4,7 @@
  * Сделано задание на звездочку
  * Реализовано оба метода и tryLater
  */
-exports.isStar = false;
+exports.isStar = true;
 
 /**
  * @param {Object} schedule – Расписание Банды
@@ -16,37 +16,17 @@ exports.isStar = false;
  */
 
 function getNextDay(currentDay) {
-    switch (currentDay) {
-        case 'ПН':
-            return 'ВТ';
-        case 'ВТ':
-            return 'СР';
-        case 'СР':
-            return 'ЧТ';
-        case 'ЧТ':
-            return 'ПТ';
-        case 'ПТ':
-            return 'СБ';
-        default:
-            return 'ВС';
-    }
+    var nextDay = { 'ПН': 'ВТ', 'ВТ': 'СР', 'СР': 'ЧТ', 'ЧТ': 'ПТ',
+    'ПТ': 'СБ', 'СБ': 'ВС', 'ВС': 'ПН' };
+
+    return nextDay[currentDay];
 }
 
 function getYesterday(currentDay) {
-    switch (currentDay) {
-        case 'ВТ':
-            return 'ПН';
-        case 'СР':
-            return 'ВТ';
-        case 'ЧТ':
-            return 'СР';
-        case 'ПТ':
-            return 'ЧТ';
-        case 'СБ':
-            return 'ПТ';
-        default:
-            return 'СБ';
-    }
+    var yesterday = { 'ПН': 'ВС', 'ВТ': 'ПН', 'СР': 'ВТ', 'ЧТ': 'СР',
+    'ПТ': 'ЧТ', 'СБ': 'ПТ', 'ВС': 'СБ' };
+
+    return yesterday[currentDay];
 }
 
 function setTimeRegardingBank(oldTime, shift) {
@@ -76,7 +56,8 @@ function freeTimeSearch(friendBusyTime, currentFreeTime, freeTimes) {
     if (friendBusyTime.from <= currentFreeTime.begin &&
         friendBusyTime.to > currentFreeTime.begin) {
         if (friendBusyTime.to >= currentFreeTime.end) {
-            currentFreeTime = {};
+            currentFreeTime.begin = undefined;
+            currentFreeTime.end = undefined;
         } else {
             currentFreeTime.begin = friendBusyTime.to;
         }
