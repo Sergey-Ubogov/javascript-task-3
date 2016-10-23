@@ -207,6 +207,9 @@ exports.getAppropriateMoment = function (schedule, duration, workingHours) {
             if (!find) {
                 this.exists();
             }
+            if (!find) {
+                return false;
+            }
             copyGoodDays.forEach(function (goodDay) {
                 goodDay.forEach(function (goodTime) {
                     if (String(find) === String(goodTime.begin)) {
