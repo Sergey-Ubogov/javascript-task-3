@@ -102,41 +102,34 @@ function getFreeTimeForFriend(friend, currentFreeTime, goodDay) {
     });
 }
 
+function copyScheduleFriends(friendSchedule, copyFriendShedule, timeZoneWithBank) {
+    friendSchedule.forEach(function (busyTime) {
+        copyFriendShedule.push(
+            {
+                from: setTimeRegardingBank(busyTime.from, timeZoneWithBank),
+                to: setTimeRegardingBank(busyTime.to, timeZoneWithBank)
+            });
+    });
+}
 exports.getAppropriateMoment = function (schedule, duration, workingHours) {
     console.info(schedule, duration, workingHours);
     var timeZoneBank = Number(workingHours.from.split('+')[1]);
-    var timeZoneDanny = Number(schedule.Danny[0].from.split('+')[1]);
-    var timeZoneRusty = Number(schedule.Rusty[0].from.split('+')[1]);
-    var timeZoneLinus = Number(schedule.Linus[0].from.split('+')[1]);
-    var copyShadule = {
-        Danny: [
-        ],
-        Rusty: [
-        ],
-        Linus: [
-        ]
+    var timeZone = {
+        Danny: Number(schedule.Danny[0].from.split('+')[1]),
+        Rusty: Number(schedule.Rusty[0].from.split('+')[1]),
+        Linus: Number(schedule.Linus[0].from.split('+')[1])
     };
-    schedule.Danny.forEach(function (scheduleDanny) {
-        copyShadule.Danny.push(
-            {
-                from: setTimeRegardingBank(scheduleDanny.from, timeZoneBank - timeZoneDanny),
-                to: setTimeRegardingBank(scheduleDanny.to, timeZoneBank - timeZoneDanny)
-            });
-    });
-    schedule.Rusty.forEach(function (scheduleRusty) {
-        copyShadule.Rusty.push(
-            {
-                from: setTimeRegardingBank(scheduleRusty.from, timeZoneBank - timeZoneRusty),
-                to: setTimeRegardingBank(scheduleRusty.to, timeZoneBank - timeZoneRusty)
-            });
-    });
-    schedule.Linus.forEach(function (scheduleLinus) {
-        copyShadule.Linus.push(
-            {
-                from: setTimeRegardingBank(scheduleLinus.from, timeZoneBank - timeZoneLinus),
-                to: setTimeRegardingBank(scheduleLinus.to, timeZoneBank - timeZoneLinus)
-            });
-    });
+    var copyShedule = {
+        Danny: [],
+        Rusty: [],
+        Linus: []
+    };
+    for (var friend in schedule) {
+        if (schedule.hasOwnProperty(friend)) {
+            copyScheduleFriends(schedule[friend],
+                copyShedule[friend], timeZoneBank - timeZone[friend]);
+        }
+    }
     var goodDays = [[], [], []];
     for (var i = 1; i <= goodDays.length; i++) {
         goodDays[i - 1].push({ begin:
@@ -161,20 +154,22 @@ exports.getAppropriateMoment = function (schedule, duration, workingHours) {
          * @returns {Boolean}
          */
         exists: function () {
-            var friends = [copyShadule.Danny, copyShadule.Rusty, copyShadule.Linus];
+            find = false;
+            var friends = [copyShedule.Danny, copyShedule.Rusty, copyShedule.Linus];
             goodDays.forEach(function (goodDay) {
                 goodDay.forEach(function (currentFreeTime) {
-                    friends.forEach(function (friend) {
-                        getFreeTimeForFriend(friend, currentFreeTime, goodDay);
+                    friends.forEach(function (scheduleFriend) {
+                        getFreeTimeForFriend(scheduleFriend, currentFreeTime, goodDay);
                     });
                 });
             });
+            copyGoodDays = [];
             goodDays.forEach(function (goodDay) {
                 copyGoodDays.push([]);
                 goodDay.forEach(function (goodTime) {
                     copyGoodDays[copyGoodDays.length - 1].push({
-                        begin: goodTime.begin,
-                        end: goodTime.end
+                        begin: new Date(String(goodTime.begin)),
+                        end: new Date(String(goodTime.end))
                     });
                 });
             });
@@ -233,7 +228,7 @@ exports.getAppropriateMoment = function (schedule, duration, workingHours) {
             }
             copyGoodDays.forEach(function (goodDay) {
                 goodDay.forEach(function (goodTime) {
-                    if (find === goodTime.begin) {
+                    if (String(find) === String(goodTime.begin)) {
                         goodTime.begin.setMinutes(goodTime.begin.getMinutes() + 30);
                     }
                 });
