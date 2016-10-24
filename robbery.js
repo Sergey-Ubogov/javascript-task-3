@@ -20,7 +20,7 @@ var nameDayToNumber = {
 };
 function setTimeRegardingBank(oldTime, shift) {
     var day = oldTime.split(' ')[0];
-    var newDate = new Date(Date.parse('1 ' + String(nameDayToNumber[day]) + ' 1900 ' +
+    var newDate = new Date(Date.parse('1 ' + String(nameDayToNumber[day]) + ' 1906 ' +
         String(oldTime.split(' ')[1].split('+')[0]) + ' GMT-' + String(shift * 100)));
 
     return newDate;
@@ -89,11 +89,11 @@ exports.getAppropriateMoment = function (schedule, duration, workingHours) {
     var goodDays = [[], [], []];
     for (var i = 1; i <= goodDays.length; i++) {
         goodDays[i - 1].push({ begin:
-                            new Date(Date.parse('1 ' + i + ' 1900 ' +
+                            new Date(Date.parse('1 ' + i + ' 1906 ' +
                                 workingHours.from.split('+')[0] + ' GMT+0')
                             ),
                           end:
-                            new Date(Date.parse('1 ' + i + ' 1900 ' +
+                            new Date(Date.parse('1 ' + i + ' 1906 ' +
                                 workingHours.to.split('+')[0] + ' GMT+0')
                             )
                         });
