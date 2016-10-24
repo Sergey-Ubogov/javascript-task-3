@@ -205,7 +205,13 @@ exports.getAppropriateMoment = function (schedule, duration, workingHours) {
 
                 return true;
             }
-            find.setMinutes(find.getUTCMinutes() - 30);
+            copyGoodDays.forEach(function (goodDay) {
+                goodDay.forEach(function (goodTime) {
+                    if (String(find) === String(goodTime.begin)) {
+                        goodTime.begin.setMinutes(goodTime.begin.getUTCMinutes() - 30);
+                    }
+                });
+            });
 
             return false;
         }
