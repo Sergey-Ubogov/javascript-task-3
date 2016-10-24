@@ -98,8 +98,15 @@ exports.getAppropriateMoment = function (schedule, duration, workingHours) {
                             )
                         });
     }
-    var find = false;
-    var copyGoodDays = [];
+    var friends = [copyShedule.Danny, copyShedule.Rusty, copyShedule.Linus];
+    goodDays.forEach(function (goodDay) {
+        goodDay.forEach(function (currentFreeTime) {
+            friends.forEach(function (scheduleFriend) {
+                getFreeTimeForFriend(scheduleFriend, currentFreeTime, goodDay);
+            });
+        });
+    });
+    //  var copyGoodDays = [];
 
     return {
 
@@ -108,39 +115,16 @@ exports.getAppropriateMoment = function (schedule, duration, workingHours) {
          * @returns {Boolean}
          */
         exists: function () {
-            find = false;
-            var friends = [copyShedule.Danny, copyShedule.Rusty, copyShedule.Linus];
-            goodDays.forEach(function (goodDay) {
-                goodDay.forEach(function (currentFreeTime) {
-                    friends.forEach(function (scheduleFriend) {
-                        getFreeTimeForFriend(scheduleFriend, currentFreeTime, goodDay);
-                    });
-                });
-            });
-            copyGoodDays = [];
-            goodDays.forEach(function (goodDay) {
-                copyGoodDays.push([]);
-                goodDay.forEach(function (goodTime) {
-                    copyGoodDays[copyGoodDays.length - 1].push({
-                        begin: new Date(goodTime.begin),
-                        end: new Date(goodTime.end)
-                    });
-                });
-            });
-            //  console.info(goodDays);
+            var find = false;
             goodDays.forEach(function (goodDay) {
                 goodDay.forEach(function (goodTime) {
                     if ((goodTime.end - goodTime.begin) / (60 * 1000) >= duration && !find) {
-                        find = goodTime.begin;
+                        find = true;
                     }
                 });
             });
-            if (find) {
-                //  console.info(find);
-                return true;
-            }
 
-            return false;
+            return find;
         },
 
         /**
@@ -151,24 +135,29 @@ exports.getAppropriateMoment = function (schedule, duration, workingHours) {
          * @returns {String}
          */
         format: function (template) {
-            if (!find) {
-                this.exists();
-            }
-            if (find) {
-                var hours = String(find.getUTCHours());
-                var minutes = String(find.getUTCMinutes());
-                if (hours.length === 1) {
-                    hours = '0' + hours;
+            if (this.exists()) {
+                var timeRobbery = false;
+                goodDays.forEach(function (goodDay) {
+                    goodDay.forEach(function (goodTime) {
+                        if ((goodTime.end - goodTime.begin) / (60 * 1000) >= duration &&
+                            !timeRobbery) {
+                            timeRobbery = goodTime.begin;
+                        }
+                    });
+                });
+                if (timeRobbery.getUTCDay() > 3) {
+                    return '';
                 }
-                if (minutes.length === 1) {
-                    minutes = '0' + minutes;
-                }
+                var hours = timeRobbery.getUTCHours();
+                var minutes = timeRobbery.getUTCMinutes();
+                hours = hours < 10 ? '0' + hours : hours;
+                minutes = minutes < 10 ? '0' + minutes : minutes;
                 template = template.replace('%HH', hours);
                 template = template.replace('%MM', minutes);
                 var numberDayToName = {
-                    1: 'ПН', 2: 'ВТ', 3: 'СР', 4: 'ЧТ', 5: 'ПТ', 6: 'СБ', 0: 'ВС'
+                    1: 'ПН', 2: 'ВТ', 3: 'СР'
                 };
-                template = template.replace('%DD', numberDayToName[find.getUTCDay()]);
+                template = template.replace('%DD', numberDayToName[timeRobbery.getUTCDay()]);
 
                 return template;
             }
@@ -182,10 +171,8 @@ exports.getAppropriateMoment = function (schedule, duration, workingHours) {
          * @returns {Boolean}
          */
         tryLater: function () {
-            if (!find) {
-                this.exists();
-            }
-            if (!find) {
+
+            /*  if (!this.exists()) {
                 return false;
             }
             copyGoodDays.forEach(function (goodDay) {
@@ -214,7 +201,7 @@ exports.getAppropriateMoment = function (schedule, duration, workingHours) {
                         goodTime.begin.setMinutes(goodTime.begin.getUTCMinutes() - 30);
                     }
                 });
-            });
+            });*/
 
             return false;
         }
