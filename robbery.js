@@ -15,39 +15,13 @@ exports.isStar = true;
  * @returns {Object}
  */
 
-function getNextDay(currentDay) {
-    var nextDay = { 'ПН': 'ВТ', 'ВТ': 'СР', 'СР': 'ЧТ', 'ЧТ': 'ПТ',
-    'ПТ': 'СБ', 'СБ': 'ВС', 'ВС': 'ПН' };
-
-    return nextDay[currentDay];
-}
-
-function getYesterday(currentDay) {
-    var yesterday = { 'ПН': 'ВС', 'ВТ': 'ПН', 'СР': 'ВТ', 'ЧТ': 'СР',
-    'ПТ': 'ЧТ', 'СБ': 'ПТ', 'ВС': 'СБ' };
-
-    return yesterday[currentDay];
-}
-
+var nameDayToNumber = {
+    'ПН': 1, 'ВТ': 2, 'СР': 3, 'ЧТ': 4, 'ПТ': 5, 'СБ': 6, 'ВС': 7
+};
 function setTimeRegardingBank(oldTime, shift) {
-    var hours = Number(oldTime.split(' ')[1].split(':')[0]);
-    var nameDayToNumber = {
-        'ПН': 1, 'ВТ': 2, 'СР': 3, 'ЧТ': 4, 'ПТ': 5, 'СБ': 6, 'ВС': 7
-    };
     var day = oldTime.split(' ')[0];
-    if (hours + shift >= 24) {
-        hours = hours + shift - 24;
-        day = getNextDay(day);
-    } else if (hours + shift < 0) {
-        hours = 24 + hours + shift;
-        day = getYesterday(day);
-    } else {
-        hours = hours + shift;
-    }
-    if (String(hours).length === 1) {
-        hours = '0' + String(hours);
-    }
-    var newDate = new Date(0, 0, nameDayToNumber[day], hours, oldTime.split(':')[1].split('+')[0]);
+    var newDate = new Date(Date.parse('1 ' + String(nameDayToNumber[day]) + ' 1900 ' +
+        String(oldTime.split(' ')[1].split('+')[0]) + ' GMT-' + String(shift * 100)));
 
     return newDate;
 }
@@ -111,17 +85,16 @@ exports.getAppropriateMoment = function (schedule, duration, workingHours) {
                 copyShedule[friend], timeZoneBank - timeZone[friend]);
         }
     }
+    //  console.info(copyShedule);
     var goodDays = [[], [], []];
     for (var i = 1; i <= goodDays.length; i++) {
         goodDays[i - 1].push({ begin:
-                            new Date(
-                                0, 0, i, Number(workingHours.from.split(':')[0]),
-                                Number(workingHours.from.split(':')[1].split('+')[0])
+                            new Date(Date.parse('1 ' + i + ' 1900 ' +
+                                workingHours.from.split('+')[0] + ' GMT+0')
                             ),
                           end:
-                            new Date(
-                                0, 0, i, Number(workingHours.to.split(':')[0]),
-                                Number(workingHours.to.split(':')[1].split('+')[0])
+                            new Date(Date.parse('1 ' + i + ' 1900 ' +
+                                workingHours.to.split('+')[0] + ' GMT+0')
                             )
                         });
     }
@@ -149,11 +122,12 @@ exports.getAppropriateMoment = function (schedule, duration, workingHours) {
                 copyGoodDays.push([]);
                 goodDay.forEach(function (goodTime) {
                     copyGoodDays[copyGoodDays.length - 1].push({
-                        begin: new Date(String(goodTime.begin)),
-                        end: new Date(String(goodTime.end))
+                        begin: new Date(goodTime.begin),
+                        end: new Date(goodTime.end)
                     });
                 });
             });
+            //  console.info(goodDays);
             goodDays.forEach(function (goodDay) {
                 goodDay.forEach(function (goodTime) {
                     if ((goodTime.end - goodTime.begin) / (60 * 1000) >= duration && !find) {
@@ -162,6 +136,7 @@ exports.getAppropriateMoment = function (schedule, duration, workingHours) {
                 });
             });
             if (find) {
+                //  console.info(find);
                 return true;
             }
 
@@ -177,8 +152,8 @@ exports.getAppropriateMoment = function (schedule, duration, workingHours) {
          */
         format: function (template) {
             if (find) {
-                var hours = String(find.getHours());
-                var minutes = String(find.getMinutes());
+                var hours = String(find.getUTCHours());
+                var minutes = String(find.getUTCMinutes());
                 if (hours.length === 1) {
                     hours = '0' + hours;
                 }
@@ -190,7 +165,7 @@ exports.getAppropriateMoment = function (schedule, duration, workingHours) {
                 var numberDayToName = {
                     1: 'ПН', 2: 'ВТ', 3: 'СР', 4: 'ЧТ', 5: 'ПТ', 6: 'СБ', 0: 'ВС'
                 };
-                template = template.replace('%DD', numberDayToName[find.getDay()]);
+                template = template.replace('%DD', numberDayToName[find.getUTCDay()]);
 
                 return template;
             }
@@ -213,7 +188,7 @@ exports.getAppropriateMoment = function (schedule, duration, workingHours) {
             copyGoodDays.forEach(function (goodDay) {
                 goodDay.forEach(function (goodTime) {
                     if (String(find) === String(goodTime.begin)) {
-                        goodTime.begin.setMinutes(goodTime.begin.getMinutes() + 30);
+                        goodTime.begin.setMinutes(goodTime.begin.getUTCMinutes() + 30);
                     }
                 });
             });
@@ -230,7 +205,7 @@ exports.getAppropriateMoment = function (schedule, duration, workingHours) {
 
                 return true;
             }
-            find.setMinutes(find.getMinutes() - 30);
+            find.setMinutes(find.getUTCMinutes() - 30);
 
             return false;
         }
