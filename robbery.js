@@ -151,6 +151,9 @@ exports.getAppropriateMoment = function (schedule, duration, workingHours) {
          * @returns {String}
          */
         format: function (template) {
+            if (!find) {
+                this.exists();
+            }
             if (find) {
                 var hours = String(find.getUTCHours());
                 var minutes = String(find.getUTCMinutes());
@@ -205,13 +208,7 @@ exports.getAppropriateMoment = function (schedule, duration, workingHours) {
 
                 return true;
             }
-            copyGoodDays.forEach(function (goodDay) {
-                goodDay.forEach(function (goodTime) {
-                    if (String(find) === String(goodTime.begin)) {
-                        goodTime.begin.setMinutes(goodTime.begin.getUTCMinutes() - 30);
-                    }
-                });
-            });
+            find.setMinutes(find.getUTCMinutes() - 30);
 
             return false;
         }
