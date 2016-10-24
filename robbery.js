@@ -118,7 +118,8 @@ exports.getAppropriateMoment = function (schedule, duration, workingHours) {
             var find = false;
             goodDays.forEach(function (goodDay) {
                 goodDay.forEach(function (goodTime) {
-                    if ((goodTime.end - goodTime.begin) / (60 * 1000) >= duration && !find) {
+                    if ((goodTime.end - goodTime.begin) / (60 * 1000) >= duration && !find &&
+                        goodTime.begin.getUTCDay() < 4) {
                         find = true;
                     }
                 });
