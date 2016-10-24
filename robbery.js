@@ -53,7 +53,9 @@ function freeTimeSearch(friendBusyTime, currentFreeTime, freeTimes) {
 
 function getFreeTimeForFriend(friend, currentFreeTime, goodDay) {
     friend.forEach(function (friendBusyTime) {
-        freeTimeSearch(friendBusyTime, currentFreeTime, goodDay);
+        if (friendBusyTime.to.getUTCDay() < 4 && friendBusyTime.from.getUTCDay() >= 1) {
+            freeTimeSearch(friendBusyTime, currentFreeTime, goodDay);
+        }
     });
 }
 
