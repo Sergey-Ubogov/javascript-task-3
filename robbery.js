@@ -71,23 +71,20 @@ function copyScheduleFriends(friendSchedule, copyFriendShedule, timeZoneWithBank
 exports.getAppropriateMoment = function (schedule, duration, workingHours) {
     console.info(schedule, duration, workingHours);
     var timeZoneBank = Number(workingHours.from.split('+')[1]);
-    var timeZone = {
-        Danny: Number(schedule.Danny[0].from.split('+')[1]),
-        Rusty: Number(schedule.Rusty[0].from.split('+')[1]),
-        Linus: Number(schedule.Linus[0].from.split('+')[1])
-    };
     var copyShedule = {
         Danny: [],
         Rusty: [],
         Linus: []
     };
+    var timeZoneFriend = 0;
     for (var friend in schedule) {
         if (schedule.hasOwnProperty(friend)) {
+            timeZoneFriend = schedule[friend].length !== 0
+                ? Number(schedule[friend][0].from.split('+')[1]) : 0;
             copyScheduleFriends(schedule[friend],
-                copyShedule[friend], timeZoneBank - timeZone[friend]);
+                copyShedule[friend], timeZoneBank - timeZoneFriend);
         }
     }
-    //  console.info(copyShedule);
     var goodDays = [[], [], []];
     for (var i = 1; i <= goodDays.length; i++) {
         goodDays[i - 1].push({ begin:
