@@ -51,59 +51,44 @@ function freeTimeSearch(friendBusyTime, currentFreeTime, freeTimes) {
     }
 }
 
-function getFreeTimeForFriend(friend, currentFreeTime, goodDay) {
-    friend.forEach(function (friendBusyTime) {
-        if (friendBusyTime.to.getUTCDay() < 4 && friendBusyTime.from.getUTCDay() >= 1) {
-            freeTimeSearch(friendBusyTime, currentFreeTime, goodDay);
-        }
-    });
-}
-
-function copyScheduleFriends(friendSchedule, copyFriendShedule, timeZoneWithBank) {
+function copyScheduleFriends(friendSchedule, copyFriendSchedule, timeZoneWithBank) {
     friendSchedule.forEach(function (busyTime) {
-        copyFriendShedule.push(
+        copyFriendSchedule.push(
             {
                 from: setTimeRegardingBank(busyTime.from, timeZoneWithBank),
                 to: setTimeRegardingBank(busyTime.to, timeZoneWithBank)
             });
     });
 }
+
 exports.getAppropriateMoment = function (schedule, duration, workingHours) {
     console.info(schedule, duration, workingHours);
-    var timeZoneBank = Number(workingHours.from.split('+')[1]);
-    var copyShedule = {
-        Danny: [],
-        Rusty: [],
-        Linus: []
-    };
+    var copySchedule = [];
     var timeZoneFriend = 0;
     for (var friend in schedule) {
         if (schedule.hasOwnProperty(friend)) {
             timeZoneFriend = schedule[friend].length !== 0
                 ? Number(schedule[friend][0].from.split('+')[1]) : 0;
             copyScheduleFriends(schedule[friend],
-                copyShedule[friend], timeZoneBank - timeZoneFriend);
+                copySchedule, Number(workingHours.from.split('+')[1]) - timeZoneFriend);
         }
     }
-    var goodDays = [[], [], []];
-    for (var i = 1; i <= goodDays.length; i++) {
-        goodDays[i - 1].push({ begin:
-                            new Date(Date.parse('1 ' + i + ' 1906 ' +
-                                workingHours.from.split('+')[0] + ' GMT+0')
-                            ),
-                          end:
-                            new Date(Date.parse('1 ' + i + ' 1906 ' +
-                                workingHours.to.split('+')[0] + ' GMT+0')
-                            )
-                        });
-    }
-    var friends = [copyShedule.Danny, copyShedule.Rusty, copyShedule.Linus];
-    goodDays.forEach(function (goodDay) {
-        goodDay.forEach(function (currentFreeTime) {
-            friends.forEach(function (scheduleFriend) {
-                getFreeTimeForFriend(scheduleFriend, currentFreeTime, goodDay);
-            });
+    var goodDays = [];
+    for (var i = 1; i <= 3; i++) {
+        goodDays.push({
+            begin: new Date(Date.parse('1 ' + i + ' 1906 ' + workingHours.from.split('+')[0] +
+                ' GMT+0')),
+            end: new Date(Date.parse('1 ' + i + ' 1906 ' + workingHours.to.split('+')[0] +
+                ' GMT+0'))
         });
+    }
+    goodDays.forEach(function (goodDay) {
+        copySchedule.forEach(function (scheduleFriend) {
+            freeTimeSearch(scheduleFriend, goodDay, goodDays);
+        });
+    });
+    goodDays.sort(function (a, b) {
+        return a.begin - b.begin;
     });
     //  var copyGoodDays = [];
 
@@ -115,13 +100,11 @@ exports.getAppropriateMoment = function (schedule, duration, workingHours) {
          */
         exists: function () {
             var find = false;
-            goodDays.forEach(function (goodDay) {
-                goodDay.forEach(function (goodTime) {
-                    if ((goodTime.end - goodTime.begin) / (60 * 1000) >= duration && !find &&
-                        goodTime.begin.getUTCDay() < 4) {
-                        find = true;
-                    }
-                });
+            goodDays.forEach(function (goodTime) {
+                if ((goodTime.end - goodTime.begin) / (60 * 1000) >= duration && !find &&
+                    goodTime.begin.getUTCDay() < 4) {
+                    find = true;
+                }
             });
 
             return find;
@@ -137,13 +120,11 @@ exports.getAppropriateMoment = function (schedule, duration, workingHours) {
         format: function (template) {
             if (this.exists()) {
                 var timeRobbery = false;
-                goodDays.forEach(function (goodDay) {
-                    goodDay.forEach(function (goodTime) {
-                        if ((goodTime.end - goodTime.begin) / (60 * 1000) >= duration &&
-                            !timeRobbery) {
-                            timeRobbery = goodTime.begin;
-                        }
-                    });
+                goodDays.forEach(function (goodTime) {
+                    if ((goodTime.end - goodTime.begin) / (60 * 1000) >= duration &&
+                        !timeRobbery) {
+                        timeRobbery = goodTime.begin;
+                    }
                 });
                 if (timeRobbery.getUTCDay() > 3) {
                     return '';
@@ -192,7 +173,6 @@ exports.getAppropriateMoment = function (schedule, duration, workingHours) {
             });
             if (findMore) {
                 find = findMore;
-
                 return true;
             }
             copyGoodDays.forEach(function (goodDay) {
