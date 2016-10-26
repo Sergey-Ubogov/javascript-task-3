@@ -18,12 +18,12 @@ exports.isStar = false;
 var CURRENT_YEAR = ' 2016 ';
 var CURRENT_MONTH = '2 ';
 
-function getTimeRegardingBank(oldTime, shift) {
-    var weekDays = ['ПН', 'ВТ', 'СР', 'ЧТ', 'ПТ', 'СБ', 'ВС'];
+function getTimeRegardingBank(oldTime, timeZone) {
+    var WEEK_DAYS = ['ПН', 'ВТ', 'СР', 'ЧТ', 'ПТ', 'СБ', 'ВС'];
     var dayInOldTime = oldTime.split(' ')[0];
-    var newDate = new Date(Date.parse(CURRENT_MONTH + weekDays.indexOf(dayInOldTime) +
-        CURRENT_YEAR + oldTime.split(' ')[1].split('+')[0] + ' GMT'));
-    newDate.setUTCHours(newDate.getUTCHours() + shift);
+    var newDate = new Date(Date.parse(CURRENT_MONTH + (WEEK_DAYS.indexOf(dayInOldTime) + 1) +
+        CURRENT_YEAR + String(oldTime.split(' ')[1].split('+')[0]) + ' GMT'));
+    newDate.setUTCHours(newDate.getUTCHours() + timeZone);
 
     return newDate;
 }
@@ -82,16 +82,19 @@ function freeTimeSearch(goodDays, copySchedule) {
     }
 }
 
+function getTimeZoneRegardingBank(scheduleFriend, workingHours) {
+    //  всё, что во времени находится после плюса является временной зоной
+    return workingHours.from.split('+')[1] - scheduleFriend.from.split('+')[1];
+}
+
 exports.getAppropriateMoment = function (schedule, duration, workingHours) {
     console.info(schedule, duration, workingHours);
     var copySchedule = [];
     var timeZoneFriend = 0;
     for (var friend in schedule) {
-        if (schedule.hasOwnProperty(friend)) {
-            timeZoneFriend = schedule[friend].length !== 0
-                ? Number(schedule[friend][0].from.split('+')[1]) : 0;
-            copyScheduleFriends(schedule[friend],
-                copySchedule, Number(workingHours.from.split('+')[1]) - timeZoneFriend);
+        if (schedule.hasOwnProperty(friend) && schedule[friend].length !== 0) {
+            timeZoneFriend = getTimeZoneRegardingBank(schedule[friend][0], workingHours);
+            copyScheduleFriends(schedule[friend], copySchedule, timeZoneFriend);
         }
     }
     var goodDays = [];
@@ -108,7 +111,7 @@ exports.getAppropriateMoment = function (schedule, duration, workingHours) {
     goodDays.sort(function (a, b) {
         return a.begin - b.begin;
     });
-    //  var copyGoodDays = [];
+    var SECOND_AND_MILLISECOND = 60 * 1000;
 
     return {
 
@@ -118,9 +121,8 @@ exports.getAppropriateMoment = function (schedule, duration, workingHours) {
          */
         exists: function () {
             var find = false;
-            var MILLISECOND_AND_SECOND = 1000 * 60;
             goodDays.forEach(function (goodTime) {
-                if ((goodTime.end - goodTime.begin) / MILLISECOND_AND_SECOND >= duration &&
+                if ((goodTime.end - goodTime.begin) / SECOND_AND_MILLISECOND >= duration &&
                     !find && duration > 0) {
                     find = true;
                 }
@@ -140,7 +142,7 @@ exports.getAppropriateMoment = function (schedule, duration, workingHours) {
             if (this.exists()) {
                 var timeRobbery = false;
                 goodDays.forEach(function (goodTime) {
-                    if ((goodTime.end - goodTime.begin) / (60 * 1000) >= duration &&
+                    if ((goodTime.end - goodTime.begin) / SECOND_AND_MILLISECOND >= duration &&
                         duration > 0 && !timeRobbery) {
                         timeRobbery = goodTime.begin;
                     }
