@@ -20,7 +20,7 @@ var nameDayToNumber = {
 };
 function setTimeRegardingBank(oldTime, shift) {
     var day = oldTime.split(' ')[0];
-    var newDate = new Date(Date.parse('1 ' + String(nameDayToNumber[day]) + ' 1906 ' +
+    var newDate = new Date(Date.parse('2 ' + String(nameDayToNumber[day]) + ' 2016 ' +
         String(oldTime.split(' ')[1].split('+')[0]) + ' GMT'));
     newDate.setUTCHours(newDate.getUTCHours() + shift);
 
@@ -87,9 +87,9 @@ exports.getAppropriateMoment = function (schedule, duration, workingHours) {
     var goodDays = [];
     for (var i = 1; i <= 3; i++) {
         goodDays.push({
-            begin: new Date(Date.parse('1 ' + i + ' 1906 ' + workingHours.from.split('+')[0] +
+            begin: new Date(Date.parse('2 ' + i + ' 2016 ' + workingHours.from.split('+')[0] +
                 ' GMT+0')),
-            end: new Date(Date.parse('1 ' + i + ' 1906 ' + workingHours.to.split('+')[0] +
+            end: new Date(Date.parse('2 ' + i + ' 2016 ' + workingHours.to.split('+')[0] +
                 ' GMT+0'))
         });
     }
