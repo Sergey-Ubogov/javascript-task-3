@@ -22,7 +22,7 @@ function getTimeRegardingBank(oldTime, timeZone) {
     var WEEK_DAYS = ['ПН', 'ВТ', 'СР', 'ЧТ', 'ПТ', 'СБ', 'ВС'];
     var dayInOldTime = oldTime.split(' ')[0];
     var newDate = new Date(Date.parse(CURRENT_MONTH + (WEEK_DAYS.indexOf(dayInOldTime) + 1) +
-        CURRENT_YEAR + String(oldTime.split(' ')[1].split('+')[0]) + ' GMT'));
+        CURRENT_YEAR + oldTime.split(' ')[1].split('+')[0] + ' GMT'));
     newDate.setUTCHours(newDate.getUTCHours() + timeZone);
 
     return newDate;
@@ -60,16 +60,6 @@ function searchCrossing(friendBusyTime, currentFreeTime, freeTimes) {
     crossingInsideOrRight(friendBusyTime, currentFreeTime, freeTimes);
 }
 
-function copyScheduleFriends(friendSchedule, copyFriendSchedule, timeZoneWithBank) {
-    friendSchedule.forEach(function (busyTime) {
-        copyFriendSchedule.push(
-            {
-                from: getTimeRegardingBank(busyTime.from, timeZoneWithBank),
-                to: getTimeRegardingBank(busyTime.to, timeZoneWithBank)
-            });
-    });
-}
-
 function freeTimeSearch(goodDays, copySchedule) {
     var indexGoodDay = 0;
     while (indexGoodDay < goodDays.length) {
@@ -92,11 +82,18 @@ exports.getAppropriateMoment = function (schedule, duration, workingHours) {
     var copySchedule = [];
     var timeZoneFriend = 0;
     for (var friend in schedule) {
-        if (schedule.hasOwnProperty(friend) && schedule[friend].length !== 0) {
-            timeZoneFriend = getTimeZoneRegardingBank(schedule[friend][0], workingHours);
-            copyScheduleFriends(schedule[friend], copySchedule, timeZoneFriend);
+        if (schedule.hasOwnProperty(friend)) {
+            copySchedule = copySchedule.concat(schedule[friend]);
         }
     }
+    copySchedule = copySchedule.map(function (scheduleFriend) {
+        timeZoneFriend = getTimeZoneRegardingBank(scheduleFriend, workingHours);
+
+        return {
+            from: getTimeRegardingBank(scheduleFriend.from, timeZoneFriend),
+            to: getTimeRegardingBank(scheduleFriend.to, timeZoneFriend)
+        };
+    });
     var goodDays = [];
     var COUNT_GOOD_DAYS = 3;
     for (var i = 1; i <= COUNT_GOOD_DAYS; i++) {
