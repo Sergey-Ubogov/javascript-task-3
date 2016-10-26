@@ -74,16 +74,27 @@ function go(goodDays, copySchedule) {
     }
 }
 
+function chekTimeZoneBank(timeZoneBank, workingHours) {
+    if (!timeZoneBank) {
+        return { from: '00:00+5', to: '00:00+5' };
+    }
+
+    return workingHours;
+}
+
 exports.getAppropriateMoment = function (schedule, duration, workingHours) {
     console.info(schedule, duration, workingHours);
     var copySchedule = [];
     var timeZoneFriend = 0;
+    var timeZoneBank = workingHours.from !== undefined ? Number(workingHours.from
+        .split('+')[1]) : 0;
+    workingHours = chekTimeZoneBank(timeZoneBank, workingHours);
     for (var friend in schedule) {
         if (schedule.hasOwnProperty(friend)) {
             timeZoneFriend = schedule[friend].length !== 0
                 ? Number(schedule[friend][0].from.split('+')[1]) : 0;
             copyScheduleFriends(schedule[friend],
-                copySchedule, Number(workingHours.from.split('+')[1]) - timeZoneFriend);
+                copySchedule, timeZoneBank - timeZoneFriend);
         }
     }
     var goodDays = [];
