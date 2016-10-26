@@ -29,24 +29,24 @@ function setTimeRegardingBank(oldTime, shift) {
 
 function freeTimeSearch(friendBusyTime, currentFreeTime, freeTimes) {
     if (friendBusyTime.from <= currentFreeTime.begin &&
-        friendBusyTime.to > currentFreeTime.begin) {
+        friendBusyTime.to >= currentFreeTime.begin) {
         if (friendBusyTime.to >= currentFreeTime.end) {
             currentFreeTime.begin = undefined;
             currentFreeTime.end = undefined;
         } else {
-            currentFreeTime.begin = friendBusyTime.to;
+            currentFreeTime.begin = new Date(String(friendBusyTime.to));
         }
     }
     if (friendBusyTime.from > currentFreeTime.begin &&
         friendBusyTime.from < currentFreeTime.end) {
         if (friendBusyTime.to >= currentFreeTime.end) {
-            currentFreeTime.end = friendBusyTime.from;
+            currentFreeTime.end = new Date(String(friendBusyTime.from));
         } else {
-            var end = currentFreeTime.end;
-            currentFreeTime.end = friendBusyTime.from;
+            var end = new Date(String(currentFreeTime.end));
+            currentFreeTime.end = new Date(String(friendBusyTime.from));
             freeTimes.push({
-                begin: friendBusyTime.to,
-                end: end
+                begin: new Date(String(friendBusyTime.to)),
+                end: new Date(String(end))
             });
         }
     }
