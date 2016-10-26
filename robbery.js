@@ -123,7 +123,8 @@ exports.getAppropriateMoment = function (schedule, duration, workingHours) {
         exists: function () {
             var find = false;
             goodDays.forEach(function (goodTime) {
-                if ((goodTime.end - goodTime.begin) / (60 * 1000) >= duration && !find) {
+                if ((goodTime.end - goodTime.begin) / (60 * 1000) >= duration &&
+                    !find && duration > 0) {
                     find = true;
                 }
             });
@@ -143,7 +144,7 @@ exports.getAppropriateMoment = function (schedule, duration, workingHours) {
                 var timeRobbery = false;
                 goodDays.forEach(function (goodTime) {
                     if ((goodTime.end - goodTime.begin) / (60 * 1000) >= duration &&
-                        !timeRobbery) {
+                        duration > 0 && !timeRobbery) {
                         timeRobbery = goodTime.begin;
                     }
                 });
