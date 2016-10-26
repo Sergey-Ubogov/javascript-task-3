@@ -21,7 +21,8 @@ var nameDayToNumber = {
 function setTimeRegardingBank(oldTime, shift) {
     var day = oldTime.split(' ')[0];
     var newDate = new Date(Date.parse('1 ' + String(nameDayToNumber[day]) + ' 1906 ' +
-        String(oldTime.split(' ')[1].split('+')[0]) + ' GMT-' + String(shift * 100)));
+        String(oldTime.split(' ')[1].split('+')[0]) + ' GMT'));
+    newDate.setUTCHours(newDate.getUTCHours() + shift);
 
     return newDate;
 }
