@@ -15,27 +15,20 @@ exports.isStar = false;
  * @returns {Object}
  */
 
-var nameDayToNumber = {
-    'ПН': 1, 'ВТ': 2, 'СР': 3, 'ЧТ': 4, 'ПТ': 5, 'СБ': 6, 'ВС': 7
-};
-function setTimeRegardingBank(oldTime, shift) {
-    var day = oldTime.split(' ')[0];
-    var newDate = new Date(Date.parse('2 ' + String(nameDayToNumber[day]) + ' 2016 ' +
-        String(oldTime.split(' ')[1].split('+')[0]) + ' GMT'));
+var CURRENT_YEAR = ' 2016 ';
+var CURRENT_MONTH = '2 ';
+
+function getTimeRegardingBank(oldTime, shift) {
+    var weekDays = ['ПН', 'ВТ', 'СР', 'ЧТ', 'ПТ', 'СБ', 'ВС'];
+    var dayInOldTime = oldTime.split(' ')[0];
+    var newDate = new Date(Date.parse(CURRENT_MONTH + weekDays.indexOf(dayInOldTime) +
+        CURRENT_YEAR + oldTime.split(' ')[1].split('+')[0] + ' GMT'));
     newDate.setUTCHours(newDate.getUTCHours() + shift);
 
     return newDate;
 }
 
-function searchCrossing(friendBusyTime, currentFreeTime, freeTimes) {
-    if (friendBusyTime.from <= currentFreeTime.begin &&
-        friendBusyTime.to >= currentFreeTime.begin) {
-        if (friendBusyTime.to >= currentFreeTime.end) {
-            currentFreeTime.end = currentFreeTime.begin;
-        } else {
-            currentFreeTime.begin = friendBusyTime.to;
-        }
-    }
+function crossingInsideOrRight(friendBusyTime, currentFreeTime, freeTimes) {
     if (friendBusyTime.from >= currentFreeTime.begin &&
         friendBusyTime.from <= currentFreeTime.end) {
         if (friendBusyTime.to >= currentFreeTime.end) {
@@ -51,12 +44,28 @@ function searchCrossing(friendBusyTime, currentFreeTime, freeTimes) {
     }
 }
 
+function crossingLeft(friendBusyTime, currentFreeTime) {
+    if (friendBusyTime.from <= currentFreeTime.begin &&
+        friendBusyTime.to >= currentFreeTime.begin) {
+        if (friendBusyTime.to >= currentFreeTime.end) {
+            currentFreeTime.end = currentFreeTime.begin;
+        } else {
+            currentFreeTime.begin = friendBusyTime.to;
+        }
+    }
+}
+
+function searchCrossing(friendBusyTime, currentFreeTime, freeTimes) {
+    crossingLeft(friendBusyTime, currentFreeTime);
+    crossingInsideOrRight(friendBusyTime, currentFreeTime, freeTimes);
+}
+
 function copyScheduleFriends(friendSchedule, copyFriendSchedule, timeZoneWithBank) {
     friendSchedule.forEach(function (busyTime) {
         copyFriendSchedule.push(
             {
-                from: setTimeRegardingBank(busyTime.from, timeZoneWithBank),
-                to: setTimeRegardingBank(busyTime.to, timeZoneWithBank)
+                from: getTimeRegardingBank(busyTime.from, timeZoneWithBank),
+                to: getTimeRegardingBank(busyTime.to, timeZoneWithBank)
             });
     });
 }
@@ -86,18 +95,16 @@ exports.getAppropriateMoment = function (schedule, duration, workingHours) {
         }
     }
     var goodDays = [];
-    var countGoodDays = 3;
-    for (var i = 1; i <= countGoodDays; i++) {
+    var COUNT_GOOD_DAYS = 3;
+    for (var i = 1; i <= COUNT_GOOD_DAYS; i++) {
         goodDays.push({
-            begin: new Date(Date.parse('2 ' + i + ' 2016 ' + workingHours.from.split('+')[0] +
-                ' GMT+0')),
-            end: new Date(Date.parse('2 ' + i + ' 2016 ' + workingHours.to.split('+')[0] +
-                ' GMT+0'))
+            begin: new Date(Date.parse(CURRENT_MONTH + i + CURRENT_YEAR +
+                workingHours.from.split('+')[0] + ' GMT')),
+            end: new Date(Date.parse(CURRENT_MONTH + i + CURRENT_YEAR +
+                workingHours.to.split('+')[0] + ' GMT'))
         });
     }
     freeTimeSearch(goodDays, copySchedule);
-    //  goodDays.forEach(function (goodDay) {
-
     goodDays.sort(function (a, b) {
         return a.begin - b.begin;
     });
@@ -111,8 +118,9 @@ exports.getAppropriateMoment = function (schedule, duration, workingHours) {
          */
         exists: function () {
             var find = false;
+            var MILLISECOND_AND_SECOND = 1000 * 60;
             goodDays.forEach(function (goodTime) {
-                if ((goodTime.end - goodTime.begin) / (60 * 1000) >= duration &&
+                if ((goodTime.end - goodTime.begin) / MILLISECOND_AND_SECOND >= duration &&
                     !find && duration > 0) {
                     find = true;
                 }
@@ -143,10 +151,10 @@ exports.getAppropriateMoment = function (schedule, duration, workingHours) {
                 minutes = minutes < 10 ? '0' + minutes : minutes;
                 template = template.replace('%HH', hours);
                 template = template.replace('%MM', minutes);
-                var numberDayToName = {
+                var NUMBER_DAY_TO_NAME = {
                     1: 'ПН', 2: 'ВТ', 3: 'СР'
                 };
-                template = template.replace('%DD', numberDayToName[timeRobbery.getUTCDay()]);
+                template = template.replace('%DD', NUMBER_DAY_TO_NAME[timeRobbery.getUTCDay()]);
 
                 return template;
             }
