@@ -31,8 +31,7 @@ function freeTimeSearch(friendBusyTime, currentFreeTime, freeTimes) {
     if (friendBusyTime.from <= currentFreeTime.begin &&
         friendBusyTime.to >= currentFreeTime.begin) {
         if (friendBusyTime.to >= currentFreeTime.end) {
-            currentFreeTime.begin = undefined;
-            currentFreeTime.end = undefined;
+            currentFreeTime.end = new Date(String(currentFreeTime.begin));
         } else {
             currentFreeTime.begin = new Date(String(friendBusyTime.to));
         }
