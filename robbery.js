@@ -18,11 +18,11 @@ exports.isStar = false;
 var CURRENT_YEAR = ' 2016 ';
 var CURRENT_MONTH = '2 ';
 
-function getTimeRegardingBank(oldTime, timeZone) {
+function getTimeRegardingBank(oldDate, timeZone) {
     var WEEK_DAYS = ['ПН', 'ВТ', 'СР', 'ЧТ', 'ПТ', 'СБ', 'ВС'];
-    var dayInOldTime = oldTime.split(' ')[0];
-    var newDate = new Date(Date.parse(CURRENT_MONTH + (WEEK_DAYS.indexOf(dayInOldTime) + 1) +
-        CURRENT_YEAR + oldTime.split(' ')[1].split('+')[0] + ' GMT'));
+    var dayInOldDate = oldDate.split(' ')[0];
+    var newDate = new Date(Date.parse(CURRENT_MONTH + (WEEK_DAYS.indexOf(dayInOldDate) + 1) +
+        CURRENT_YEAR + oldDate.split(' ')[1].split('+')[0] + ' GMT'));
     newDate.setUTCHours(newDate.getUTCHours() + timeZone);
 
     return newDate;
@@ -83,7 +83,8 @@ exports.getAppropriateMoment = function (schedule, duration, workingHours) {
     var timeZoneFriend = 0;
     for (var friend in schedule) {
         if (schedule.hasOwnProperty(friend)) {
-            copySchedule = copySchedule.concat(schedule[friend]);
+            copySchedule = copySchedule
+                           .concat(schedule[friend]);
         }
     }
     copySchedule = copySchedule.map(function (scheduleFriend) {
