@@ -77,11 +77,13 @@ function go(goodDays, copySchedule) {
 exports.getAppropriateMoment = function (schedule, duration, workingHours) {
     console.info(schedule, duration, workingHours);
     var copySchedule = [];
+    var timeZoneFriend = 0;
     for (var friend in schedule) {
         if (schedule.hasOwnProperty(friend)) {
+            timeZoneFriend = schedule[friend].length !== 0
+                ? Number(schedule[friend][0].from.split('+')[1]) : 0;
             copyScheduleFriends(schedule[friend],
-                copySchedule, Number(workingHours.from.split('+')[1]) -
-                Number(schedule[friend][0].from.split('+')[1]));
+                copySchedule, Number(workingHours.from.split('+')[1]) - timeZoneFriend);
         }
     }
     var goodDays = [];
