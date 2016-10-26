@@ -27,25 +27,25 @@ function setTimeRegardingBank(oldTime, shift) {
     return newDate;
 }
 
-function freeTimeSearch(friendBusyTime, currentFreeTime, freeTimes) {
+function searchCrossing(friendBusyTime, currentFreeTime, freeTimes) {
     if (friendBusyTime.from <= currentFreeTime.begin &&
         friendBusyTime.to >= currentFreeTime.begin) {
         if (friendBusyTime.to >= currentFreeTime.end) {
-            currentFreeTime.end = new Date(String(currentFreeTime.begin));
+            currentFreeTime.end = currentFreeTime.begin;
         } else {
-            currentFreeTime.begin = new Date(String(friendBusyTime.to));
+            currentFreeTime.begin = friendBusyTime.to;
         }
     }
     if (friendBusyTime.from >= currentFreeTime.begin &&
         friendBusyTime.from <= currentFreeTime.end) {
         if (friendBusyTime.to >= currentFreeTime.end) {
-            currentFreeTime.end = new Date(String(friendBusyTime.from));
+            currentFreeTime.end = friendBusyTime.from;
         } else {
-            var endd = new Date(String(currentFreeTime.end));
-            currentFreeTime.end = new Date(String(friendBusyTime.from));
+            var end = new Date(String(currentFreeTime.end));
+            currentFreeTime.end = friendBusyTime.from;
             freeTimes.push({
-                begin: new Date(String(friendBusyTime.to)),
-                end: new Date(String(endd))
+                begin: friendBusyTime.to,
+                end: end
             });
         }
     }
@@ -61,43 +61,33 @@ function copyScheduleFriends(friendSchedule, copyFriendSchedule, timeZoneWithBan
     });
 }
 
-function go(goodDays, copySchedule) {
-    var ggg = 0;
-    while (ggg < goodDays.length) {
-        var mmm = 0;
-        while (mmm < copySchedule.length) {
-            freeTimeSearch(copySchedule[mmm], goodDays[ggg], goodDays);
-            mmm++;
+function freeTimeSearch(goodDays, copySchedule) {
+    var indexGoodDay = 0;
+    while (indexGoodDay < goodDays.length) {
+        var indexScheduleFriend = 0;
+        while (indexScheduleFriend < copySchedule.length) {
+            searchCrossing(copySchedule[indexScheduleFriend], goodDays[indexGoodDay], goodDays);
+            indexScheduleFriend++;
         }
-        ggg++;
+        indexGoodDay++;
     }
-}
-
-function chekTimeZoneBank(timeZoneBank, workingHours) {
-    if (!timeZoneBank) {
-        return { from: '00:00+5', to: '00:00+5' };
-    }
-
-    return workingHours;
 }
 
 exports.getAppropriateMoment = function (schedule, duration, workingHours) {
     console.info(schedule, duration, workingHours);
     var copySchedule = [];
     var timeZoneFriend = 0;
-    var timeZoneBank = workingHours.from !== undefined ? Number(workingHours.from
-        .split('+')[1]) : 0;
-    workingHours = chekTimeZoneBank(timeZoneBank, workingHours);
     for (var friend in schedule) {
         if (schedule.hasOwnProperty(friend)) {
             timeZoneFriend = schedule[friend].length !== 0
                 ? Number(schedule[friend][0].from.split('+')[1]) : 0;
             copyScheduleFriends(schedule[friend],
-                copySchedule, timeZoneBank - timeZoneFriend);
+                copySchedule, Number(workingHours.from.split('+')[1]) - timeZoneFriend);
         }
     }
     var goodDays = [];
-    for (var i = 1; i <= 3; i++) {
+    var countGoodDays = 3;
+    for (var i = 1; i <= countGoodDays; i++) {
         goodDays.push({
             begin: new Date(Date.parse('2 ' + i + ' 2016 ' + workingHours.from.split('+')[0] +
                 ' GMT+0')),
@@ -105,7 +95,7 @@ exports.getAppropriateMoment = function (schedule, duration, workingHours) {
                 ' GMT+0'))
         });
     }
-    go(goodDays, copySchedule);
+    freeTimeSearch(goodDays, copySchedule);
     //  goodDays.forEach(function (goodDay) {
 
     goodDays.sort(function (a, b) {
