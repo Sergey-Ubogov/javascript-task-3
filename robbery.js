@@ -62,6 +62,18 @@ function copyScheduleFriends(friendSchedule, copyFriendSchedule, timeZoneWithBan
     });
 }
 
+function go(goodDays, copySchedule) {
+    var ggg = 0;
+    while (ggg < goodDays.length) {
+        var mmm = 0;
+        while (mmm < copySchedule.length) {
+            freeTimeSearch(copySchedule[mmm], goodDays[ggg], goodDays);
+            mmm++;
+        }
+        ggg++;
+    }
+}
+
 exports.getAppropriateMoment = function (schedule, duration, workingHours) {
     console.info(schedule, duration, workingHours);
     var copySchedule = [];
@@ -83,11 +95,9 @@ exports.getAppropriateMoment = function (schedule, duration, workingHours) {
                 ' GMT+0'))
         });
     }
-    goodDays.forEach(function (goodDay) {
-        copySchedule.forEach(function (scheduleFriend) {
-            freeTimeSearch(scheduleFriend, goodDay, goodDays);
-        });
-    });
+    go(goodDays, copySchedule);
+    //  goodDays.forEach(function (goodDay) {
+
     goodDays.sort(function (a, b) {
         return a.begin - b.begin;
     });
