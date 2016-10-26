@@ -37,16 +37,16 @@ function freeTimeSearch(friendBusyTime, currentFreeTime, freeTimes) {
             currentFreeTime.begin = new Date(String(friendBusyTime.to));
         }
     }
-    if (friendBusyTime.from > currentFreeTime.begin &&
-        friendBusyTime.from < currentFreeTime.end) {
+    if (friendBusyTime.from >= currentFreeTime.begin &&
+        friendBusyTime.from <= currentFreeTime.end) {
         if (friendBusyTime.to >= currentFreeTime.end) {
             currentFreeTime.end = new Date(String(friendBusyTime.from));
         } else {
-            var end = new Date(String(currentFreeTime.end));
+            var endd = new Date(String(currentFreeTime.end));
             currentFreeTime.end = new Date(String(friendBusyTime.from));
             freeTimes.push({
                 begin: new Date(String(friendBusyTime.to)),
-                end: new Date(String(end))
+                end: new Date(String(endd))
             });
         }
     }
