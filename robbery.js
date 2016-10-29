@@ -21,63 +21,56 @@ var WEEK_DAYS = ['ПН', 'ВТ', 'СР', 'ЧТ', 'ПТ', 'СБ', 'ВС'];
 
 function getTimeRegardingBank(oldDate, timeZone) {
     var dayInOldDate = oldDate.split(' ')[0];
+    var oldTimeZoneFriend = oldDate.split(' ')[1].split('+')[0];
     var newDate = new Date(Date.parse(CURRENT_MONTH + (WEEK_DAYS.indexOf(dayInOldDate) + 1) +
-        CURRENT_YEAR + oldDate.split(' ')[1].split('+')[0] + ' GMT'));
+        CURRENT_YEAR + oldTimeZoneFriend + ' GMT'));
     newDate.setUTCHours(newDate.getUTCHours() + timeZone);
 
     return newDate;
 }
 
-function searchCrossingInsideOrRight(friendBusyTime, currentFreeTime, freeTimes) {
-    if (friendBusyTime.from >= currentFreeTime.begin &&
-        friendBusyTime.from <= currentFreeTime.end) {
-        if (friendBusyTime.to >= currentFreeTime.end) {
-            currentFreeTime.end = friendBusyTime.from;
+function getCopyGoodDays(goodDays) {
+    var copyGoodDays = goodDays.map(function (scheduleFriend) {
+        return {
+            begin: new Date(String(scheduleFriend.begin)),
+            end: new Date(String(scheduleFriend.end))
+        };
+    });
+
+    return copyGoodDays;
+}
+
+function searchCrossingInsideOrRight(friendBusyTime, indexGoodDay, goodDays) {
+    var copyGoodDays = getCopyGoodDays(goodDays);
+    if (friendBusyTime.from >= copyGoodDays[indexGoodDay].begin &&
+        friendBusyTime.from <= copyGoodDays[indexGoodDay].end) {
+        if (friendBusyTime.to >= copyGoodDays[indexGoodDay].end) {
+            copyGoodDays[indexGoodDay].end = friendBusyTime.from;
         } else {
-            var end = new Date(String(currentFreeTime.end));
-            currentFreeTime.end = friendBusyTime.from;
-            freeTimes.push({
+            var end = new Date(String(copyGoodDays[indexGoodDay].end));
+            copyGoodDays[indexGoodDay].end = friendBusyTime.from;
+            copyGoodDays.push({
                 begin: friendBusyTime.to,
                 end: end
             });
         }
     }
 
-    return currentFreeTime;
+    return copyGoodDays;
 }
 
-function searchCrossingLeft(friendBusyTime, currentFreeTime) {
-    if (friendBusyTime.from <= currentFreeTime.begin &&
-        friendBusyTime.to >= currentFreeTime.begin) {
-        if (friendBusyTime.to >= currentFreeTime.end) {
-            currentFreeTime.end = currentFreeTime.begin;
+function searchCrossingLeft(friendBusyTime, indexGoodDay, goodDays) {
+    var copyGoodDays = getCopyGoodDays(goodDays);
+    if (friendBusyTime.from <= copyGoodDays[indexGoodDay].begin &&
+        friendBusyTime.to >= copyGoodDays[indexGoodDay].begin) {
+        if (friendBusyTime.to >= copyGoodDays[indexGoodDay].end) {
+            copyGoodDays[indexGoodDay].end = copyGoodDays[indexGoodDay].begin;
         } else {
-            currentFreeTime.begin = friendBusyTime.to;
+            copyGoodDays[indexGoodDay].begin = friendBusyTime.to;
         }
     }
 
-    return currentFreeTime;
-}
-
-function searchCrossing(friendBusyTime, currentFreeTime, freeTimes) {
-
-    /*
-    В этих функциях весь алгоритм: есть freeTimes - в начале это просто свободное время банка в
-    ПН, ВТ и СР, в currentFreeTime находится свободное время в ПН, ВТ или СР. friendBusyTime - это
-    время занятости какого-либо из друзей в какой либо день. Представим friendBusyTime как отрезок
-    [f1, f2], currentFreeTime как отрезок [c1, c2], тогда, если f1<=c1 и f2>=c1, то есть
-    пересечение слева у отрезка [c1, c2] или [c1, c2] содержится в [f1, f2]. Тогда [c1, c2]
-    становится [f2, c2](левая граница сдвинулась) или [c1, c1](свободного времени нет в этот
-    день). Если же f1>=c1 и f1 <= c2 то:
-    1) если f2 >= c2 значит отрезок [c1, c2] имеет справа пересечение с отрезком [f1, f2] и тогда
-        [c1, c2]становится [c1, f1]
-    2) если f2<= c2 значит отрезок [f1, f2] содержится в [c1, c2] и тогда [c1, c2] разделяется на
-        2 отрезка - [c1, f1] и [f2, c1]
-    */
-    currentFreeTime = searchCrossingLeft(friendBusyTime, currentFreeTime);
-    currentFreeTime = searchCrossingInsideOrRight(friendBusyTime, currentFreeTime, freeTimes);
-
-    return currentFreeTime;
+    return copyGoodDays;
 }
 
 function freeTimeSearch(goodDays, copySchedule) {
@@ -85,7 +78,10 @@ function freeTimeSearch(goodDays, copySchedule) {
     while (indexGoodDay < goodDays.length) {
         var indexScheduleFriend = 0;
         while (indexScheduleFriend < copySchedule.length) {
-            searchCrossing(copySchedule[indexScheduleFriend], goodDays[indexGoodDay], goodDays);
+            goodDays = searchCrossingLeft(copySchedule[indexScheduleFriend], indexGoodDay,
+                goodDays);
+            goodDays = searchCrossingInsideOrRight(copySchedule[indexScheduleFriend], indexGoodDay,
+                goodDays);
             indexScheduleFriend++;
         }
         indexGoodDay++;
