@@ -92,7 +92,10 @@ function freeTimeSearch(goodDays, copySchedule) {
 
 function getTimeZoneRegardingBank(scheduleFriend, workingHours) {
     //  всё, что во времени находится после плюса является временной зоной
-    return workingHours.from.split('+')[1] - scheduleFriend.from.split('+')[1];
+    var timeZoneBank = workingHours.from.split('+')[1];
+    var timeZoneFriend = scheduleFriend.from.split('+')[1];
+
+    return timeZoneBank - timeZoneFriend;
 }
 
 function getWorkingTimeBank(goodDays, workingHours) {
